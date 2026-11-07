@@ -1,0 +1,6 @@
+{
+  "name": "SENTINELOPS",
+  "description": "AI-powered security incident response assistant for SOC analysts with persistent organizational memory powered by Hindsight and Gemini.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
